@@ -39,20 +39,12 @@ async function getWeatherData() {
       return;
     }
 
-    const precipHours = data.daily.precipitation_hours[days];
-
     if (days === 0) {
-      console.log(`Today: `);
+      console.log('today');
     } else if (days === 1) {
-      console.log(`Tomorrow: `);
+      console.log('tomorrow');
     } else {
-      console.log(`In ${days} days: `);
-    }
-
-    if (precipHours === 0) {
-      console.log('No precipitation expected.');
-    } else {
-      console.log(`${precipHours} hours of precipitation expected.`);
+      console.log(`in ${days} days`);
     }
   } catch (error) {
     console.error('Error:', error.message);
