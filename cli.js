@@ -1,37 +1,63 @@
 #!/usr/bin/env node
 
 
-const fetch = require('fetch');
-const moment = require('moment-timezone');
-const minimist = require('minimist');
-const args = minimist(process.argv.slice(2));
+import minimist from 'minimist';
+import fetch from 'node-fetch';
+import moment from 'moment-timezone';
 
+const args = minimist(process.argv.slice(2));
 const timezone = moment.tz.guess();
 
-// Replace with the appropriate URL and variables
-const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + args.latitude + '&longitude=' + args.longitude + '&daily=precipitation_hours';
+if (args.h) {
+  console.log(`
+Usage: galosh.js [options] -[n|s] LATITUDE -[e|w] LONGITUDE -z TIME_ZONE
+    -h            Show this help message and exit.
+    -n, -s        Latitude: N positive; S negative.
+    -e, -w        Longitude: E positive; W negative.
+    -z            Time zone: uses tz.guess() from moment-timezone by default.
+    -d 0-6        Day to retrieve weather: 0 is today; defaults to 1.
+    -j            Echo pretty JSON from open-meteo API and exit.
+  `);
+  process.exit(0);
+}
 
-async function getWeather() {
-  const response = await fetch(url);
-  const data = await response.json();
+const latitude = (args.n || args.s) * (args.n ? 1 : -1);
+const longitude = (args.e || args.w) * (args.e ? 1 : -1);
+const timeZone = args.z || timezone;
+const days = args.d || 1;
+const jsonOutput = args.j;
 
-  const days = args.d;
+const requestUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=precipitation_hours&timezone=${timeZone}`;
 
-  if (days == 0) {
-    console.log("today.");
-  } else if (days > 1) {
-    console.log("in " + days + " days.");
-  } else {
-    console.log("tomorrow.");
-  }
+async function getWeatherData() {
+  try {
+    const response = await fetch(requestUrl);
+    const data = await response.json();
 
-  const precipitationHours = data.daily.precipitation_hours[days];
+    if (jsonOutput) {
+      console.log(JSON.stringify(data, null, 2));
+      return;
+    }
 
-  if (precipitationHours === 0) {
-    console.log("There will be no rain on the selected day.");
-  } else {
-    console.log("There will be " + precipitationHours + " hours of rain on the selected day.");
+    const precipHours = data.daily.precipitation_hours[days];
+
+    if (days === 0) {
+      console.log(`Today: `);
+    } else if (days === 1) {
+      console.log(`Tomorrow: `);
+    } else {
+      console.log(`In ${days} days: `);
+    }
+
+    if (precipHours === 0) {
+      console.log('No precipitation expected.');
+    } else {
+      console.log(`${precipHours} hours of precipitation expected.`);
+    }
+  } catch (error) {
+    console.error('Error:', error.message);
+    process.exit(1);
   }
 }
 
-getWeather();
+getWeatherData();
