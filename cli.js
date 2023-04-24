@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-
 import minimist from 'minimist';
 import fetch from 'node-fetch';
 import moment from 'moment-timezone';
@@ -24,7 +23,7 @@ Usage: galosh.js [options] -[n|s] LATITUDE -[e|w] LONGITUDE -z TIME_ZONE
 const latitude = (args.n || args.s) * (args.n ? 1 : -1);
 const longitude = (args.e || args.w) * (args.e ? 1 : -1);
 const timeZone = args.z || timezone;
-const days = args.d || 1;
+const days = args.d === undefined ? 1 : args.d;
 const jsonOutput = args.j;
 
 const requestUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=precipitation_hours&timezone=${timeZone}`;
@@ -53,3 +52,4 @@ async function getWeatherData() {
 }
 
 getWeatherData();
+
